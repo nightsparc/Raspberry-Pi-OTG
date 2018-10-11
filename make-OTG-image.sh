@@ -44,10 +44,10 @@ read
 cd /tmp
 
 # try reuse existing image
-IMG_ZIP_CNT=`ls -1 *raspbian-stretch.zip | wc -l`
+IMG_ZIP_CNT=`ls -1 *raspbian-stretch*.zip | wc -l`
 if [[ $IMG_ZIP_CNT -gt 1 ]]; then
   printf "To many images found in /tmp, remove some or all:\n\n";
-  ls -1 *raspbian-stretch.zip
+  ls -1 *raspbian-stretch*.zip
 elif [[ $IMG_ZIP_CNT -eq 1 ]]; then
   printf "Reusing existing archive.\n"
 else  
@@ -55,14 +55,14 @@ else
 fi
 IMG_ZIP=`ls -1 *raspbian-stretch.zip`
 printf "Using archive /tmp/$IMG_ZIP\n"
-rm -f *raspbian-stretch.img
+rm -f *raspbian-stretch*.img
 unzip $IMG_ZIP
 
 #WRITE_IMAGE
 
 #goto "#MOUNT_IMAGE"
 
-IMG=`ls -1 *raspbian-stretch.img`
+IMG=`ls -1 *raspbian-stretch*.img`
 printf "Using image /tmp/$IMG\n"
 sudo dd if=$IMG of=$MMC bs=64M status=progress oflag=sync
 sync
@@ -137,28 +137,3 @@ sudo umount rootfs
 
 sudo rmdir boot
 sudo rmdir rootfs
-
-#SETUP_INTERFACE
-
-printf "Insert SDCARD into your Raspberry Pi and connect with USB cable to your PC.\n"
-printf "Waiting for interface comming up.";
-while [[ `/sbin/ifconfig | grep "aa:bb:cc:dd:ee:ff" | wc -l` -eq 0 ]]; do
-  sleep 1
-  printf "."
-done 
-printf "\n"
-IF_NAME=`/sbin/ifconfig | grep "aa:bb:cc:dd:ee:ff" | cut -d' ' -f1`
-printf "Hardware interface is named $IF_NAME, trying to rename it in connection manager as \"PI\".\n";
-
-while [[ `nmcli --terse --fields NAME,DEVICE con show | grep $IF_NAME | wc -l` -eq 0 ]]; do
-  sleep 1
-  printf "."
-done;
-printf "\n"
-CON_NAME=`nmcli --terse --fields NAME,DEVICE con show | grep $IF_NAME | cut -d: -f1`
-printf "Renaming \"$CON_NAME\" to \"PI\"\n";
-nmcli con modify "$CON_NAME" connection.id PI
-printf "Modifying connection PI to \"shared to other computers\"\n"; 
-nmcli con mod PI ipv4.method shared
-printf "Finished. Now wait 60s and try ssh pi@raspberrypi.local, password \"raspberry\" \n";
-
